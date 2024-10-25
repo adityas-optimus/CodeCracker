@@ -2,6 +2,7 @@ $(function () {
 
     var Fireworks = function () {
         var self = this;
+        var rocketSound = new Audio('Fireworks Sound Effect-[AudioTrimmer.com].mp3');
         var rand = function (rMi, rMa) {
             return ~~((Math.random() * (rMa - rMi + 1)) + rMi);
         }
@@ -18,6 +19,8 @@ $(function () {
             self.canvas = document.createElement('canvas');
             self.canvas.width = self.cw = $(window).innerWidth();
             self.canvas.height = self.ch = $(window).innerHeight();
+            // self.ctx.scale(2, 2); // Scale the context
+
             self.particles = [];
             self.partCount = 150;
             self.fireworks = [];
@@ -38,11 +41,14 @@ $(function () {
             self.showShockwave = true;
             self.showTarget = false;
             self.clearAlpha = 25;
-
+            
             $(document.body).append(self.canvas);
             self.ctx = self.canvas.getContext('2d');
             self.ctx.lineCap = 'round';
             self.ctx.lineJoin = 'round';
+            self.ctx.imageSmoothingEnabled = true; // Enable smoothing for better edges
+            self.ctx.webkitImageSmoothingEnabled = true; // For WebKit browsers
+            // self.ctx.mozImageSmoothingEnabled = true; // For Firefox
             self.lineWidth = 1;
             self.bindEvents();
             self.canvasLoop();
@@ -58,19 +64,7 @@ $(function () {
                 var newParticle = {
                     x: x,
                     y: y,
-                    coordLast: [{
-                            x: x,
-                            y: y
-                        },
-                        {
-                            x: x,
-                            y: y
-                        },
-                        {
-                            x: x,
-                            y: y
-                        }
-                    ],
+                    coordLast: [{ x: x, y: y }, { x: x, y: y }, { x: x, y: y }],
                     angle: rand(0, 360),
                     speed: rand(((self.partSpeed - self.partSpeedVariance) <= 0) ? 1 : self.partSpeed - self.partSpeedVariance, (self.partSpeed + self.partSpeedVariance)),
                     friction: 1 - self.partFriction / 100,
@@ -80,7 +74,8 @@ $(function () {
                     alpha: rand(40, 100) / 100,
                     decay: rand(10, 50) / 1000,
                     wind: (rand(0, self.partWind) - (self.partWind / 2)) / 25,
-                    lineWidth: self.lineWidth
+                    lineWidth: self.lineWidth,
+                    size: rand(5, 10)
                 };
                 self.particles.push(newParticle);
             }
@@ -120,7 +115,7 @@ $(function () {
             var i = self.particles.length;
             while (i--) {
                 var p = self.particles[i];
-
+        
                 var coordRand = (rand(1, 3) - 1);
                 self.ctx.beginPath();
                 self.ctx.moveTo(Math.round(p.coordLast[coordRand].x), Math.round(p.coordLast[coordRand].y));
@@ -128,20 +123,15 @@ $(function () {
                 self.ctx.closePath();
                 self.ctx.strokeStyle = 'hsla(' + p.hue + ', 100%, ' + p.brightness + '%, ' + p.alpha + ')';
                 self.ctx.stroke();
-
-                if (self.flickerDensity > 0) {
-                    var inverseDensity = 50 - self.flickerDensity;
-                    if (rand(0, inverseDensity) === inverseDensity) {
-                        self.ctx.beginPath();
-                        self.ctx.arc(Math.round(p.x), Math.round(p.y), rand(p.lineWidth, p.lineWidth + 3) / 2, 0, Math.PI * 2, false)
-                        self.ctx.closePath();
-                        var randAlpha = rand(50, 100) / 100;
-                        self.ctx.fillStyle = 'hsla(' + p.hue + ', 100%, ' + p.brightness + '%, ' + randAlpha + ')';
-                        self.ctx.fill();
-                    }
-                }
-            };
+        
+                // Draw particles as circles with size
+                self.ctx.beginPath();
+                self.ctx.arc(Math.round(p.x), Math.round(p.y), p.size, 0, Math.PI * 2, false);
+                self.ctx.fillStyle = 'hsla(' + p.hue + ', 100%, ' + p.brightness + '%, ' + p.alpha + ')';
+                self.ctx.fill();
+            }
         };
+        
 
 
         self.createFireworks = function (startX, startY, targetX, targetY) {
@@ -152,18 +142,10 @@ $(function () {
                 startY: startY,
                 hitX: false,
                 hitY: false,
-                coordLast: [{
-                        x: startX,
-                        y: startY
-                    },
-                    {
-                        x: startX,
-                        y: startY
-                    },
-                    {
-                        x: startX,
-                        y: startY
-                    }
+                coordLast: [
+                    { x: startX, y: startY },
+                    { x: startX, y: startY },
+                    { x: startX, y: startY }
                 ],
                 targetX: targetX,
                 targetY: targetY,
@@ -176,9 +158,7 @@ $(function () {
                 alpha: rand(50, 100) / 100,
                 lineWidth: self.lineWidth
             };
-            self.fireworks.push(newFirework);
 
-        };
 
 
         self.updateFireworks = function () {
@@ -236,6 +216,11 @@ $(function () {
 
                 }
             };
+        };
+        rocketSound.currentTime = 0;
+            rocketSound.play();
+
+            self.fireworks.push(newFirework);
         };
 
         self.drawFireworks = function () {
@@ -308,30 +293,45 @@ $(function () {
 
         }
 
+        // self.clear = function () {
+        //     self.particles = [];
+        //     self.fireworks = [];
+        //     self.ctx.clearRect(0, 0, self.cw, self.ch);
+            
+        // };
+        // self.clear = function () {
+        //     self.ctx.clearRect(0, 0, self.cw, self.ch); // Clear the canvas completely
+        // };
+
         self.clear = function () {
-            self.particles = [];
-            self.fireworks = [];
             self.ctx.clearRect(0, 0, self.cw, self.ch);
         };
-
-
+        var frameCount = 0; // Counter to keep track of frames
         self.canvasLoop = function () {
-            requestAnimFrame(self.canvasLoop, self.canvas);
-            self.ctx.globalCompositeOperation = 'destination-out';
-            self.ctx.fillStyle = 'rgba(0,0,0,' + self.clearAlpha / 100 + ')';
-            self.ctx.fillRect(0, 0, self.cw, self.ch);
-            self.updateFireworks();
-            self.updateParticles();
-            self.drawFireworks();
-            self.drawParticles();
-
+            requestAnimFrame(self.canvasLoop);
+            if (frameCount++ % 2 === 0) { // Skip every other frame
+                self.clear();
+                self.updateFireworks();
+                self.updateParticles();
+                self.drawFireworks();
+                self.drawParticles();
+            }
         };
+        // self.canvasLoop = function () {
+        //     requestAnimFrame(self.canvasLoop, self.canvas);
+        //     self.ctx.globalCompositeOperation = 'destination-out';
+        //     self.ctx.fillStyle = 'rgba(0,0,0,' + self.clearAlpha / 100 + ')';
+        //     self.ctx.fillRect(0, 0, self.cw, self.ch);
+        //     self.updateFireworks();
+        //     self.updateParticles();
+        //     self.drawFireworks();
+        //     self.drawParticles();
+
+        // };
 
         self.init();
 
     }
-
-
 
     var fworks = new Fireworks();
 
@@ -339,5 +339,5 @@ $(function () {
         $('#info-inner').stop(false, true).slideToggle(100);
         e.preventDefault();
     });
-
+    var fworks = new Fireworks();
 });
