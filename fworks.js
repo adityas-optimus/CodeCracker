@@ -19,8 +19,6 @@ $(function () {
             self.canvas = document.createElement('canvas');
             self.canvas.width = self.cw = $(window).innerWidth();
             self.canvas.height = self.ch = $(window).innerHeight();
-            // self.ctx.scale(2, 2); // Scale the context
-
             self.particles = [];
             self.partCount = 150;
             self.fireworks = [];
@@ -46,9 +44,8 @@ $(function () {
             self.ctx = self.canvas.getContext('2d');
             self.ctx.lineCap = 'round';
             self.ctx.lineJoin = 'round';
-            self.ctx.imageSmoothingEnabled = true; // Enable smoothing for better edges
-            self.ctx.webkitImageSmoothingEnabled = true; // For WebKit browsers
-            // self.ctx.mozImageSmoothingEnabled = true; // For Firefox
+            self.ctx.imageSmoothingEnabled = true; 
+            self.ctx.webkitImageSmoothingEnabled = true;
             self.lineWidth = 1;
             self.bindEvents();
             self.canvasLoop();
@@ -293,16 +290,6 @@ $(function () {
 
         }
 
-        // self.clear = function () {
-        //     self.particles = [];
-        //     self.fireworks = [];
-        //     self.ctx.clearRect(0, 0, self.cw, self.ch);
-            
-        // };
-        // self.clear = function () {
-        //     self.ctx.clearRect(0, 0, self.cw, self.ch); // Clear the canvas completely
-        // };
-
         self.clear = function () {
             self.ctx.clearRect(0, 0, self.cw, self.ch);
         };
@@ -317,20 +304,7 @@ $(function () {
                 self.drawParticles();
             }
         };
-        // self.canvasLoop = function () {
-        //     requestAnimFrame(self.canvasLoop, self.canvas);
-        //     self.ctx.globalCompositeOperation = 'destination-out';
-        //     self.ctx.fillStyle = 'rgba(0,0,0,' + self.clearAlpha / 100 + ')';
-        //     self.ctx.fillRect(0, 0, self.cw, self.ch);
-        //     self.updateFireworks();
-        //     self.updateParticles();
-        //     self.drawFireworks();
-        //     self.drawParticles();
-
-        // };
-
         self.init();
-
     }
 
     var fworks = new Fireworks();
